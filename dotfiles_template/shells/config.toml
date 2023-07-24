@@ -1,0 +1,16 @@
+# Toml general config
+
+# to add in the path
+[path]
+SEEDDOTS_BIN = "~/.userseeddotfiles/bin"
+
+# vars to expor
+[vars]
+EDITOR = "vi"
+
+# aliases
+[alias]
+ls = "ls --color=auto"
+ll = "ls -alF"
+y="echo hope walo"
+# dc = "docker-compose"

@@ -1,0 +1,7 @@
+# SeedDots
+# Setup Path
+export PATH="~/.userseeddotfiles/bin:$PATH"
+# Setup Alias
+alias ls = "ls --color=" "ls --color=auto""
+alias ll =" "ls -alF""
+alias # dc =" "docker-compose""

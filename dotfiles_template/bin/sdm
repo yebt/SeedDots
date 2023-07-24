@@ -1,0 +1,51 @@
+#!/bin/bash
+
+### Seed Dotfiles Managment ###
+
+################################################
+
+################################################
+# Vars
+SDM_WORK_DIR=$(dirname $0)
+
+################################################
+# Functions
+# Checkl if a function exist
+f_exist() {
+    local function_name="$1"
+    type -t "$function_name" >/dev/null
+}
+
+################################################
+
+
+# allowed commands, functions and  doc
+command_list=(
+    "help:help_msg:Show this help message",
+    "setups:run_setup:Run a setup scripts"
+)
+
+################################################
+##
+# check if alerts is used
+if ! f_exist "a_title"; then
+    source "$SDM_WORK_DIR/../utils/alert.sh"
+fi
+# check if test exist
+if ! f_exist "verify_commands"; then
+    source "$SDM_WORK_DIR/../utils/test.sh"
+fi
+################################################
+
+a_dialog "SDM" "··"
+
+################################################
+
+# Function to print help message
+help_msg() {
+    echo "Available commands:"
+    for command in "${command_list[@]}"; do
+        IFS=':' read -r cmd_name cmd_function cmd_desc <<< "$command"
+        echo "  $cmd_name - $cmd_desc"
+    done
+}
