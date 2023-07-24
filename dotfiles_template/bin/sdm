@@ -28,13 +28,43 @@ command_list=(
 ################################################
 ##
 # check if alerts is used
-if ! f_exist "a_title"; then
-    source "$SDM_WORK_DIR/../utils/alert.sh"
-fi
-# check if test exist
-if ! f_exist "verify_commands"; then
-    source "$SDM_WORK_DIR/../utils/test.sh"
-fi
+# temporal error
+a_error() {
+    echo "! ERROR: $1"
+}
+
+imports=(
+    "a_title:$SDM_WORK_DIR/../utils/alert.sh"
+    "verify_commands:$SDM_WORK_DIR/../utils/test.sh"
+    "parse_toml_line:$SDM_WORK_DIR/../utils/shell_config.sh"
+)
+for imprt in ${imports[@]}; do
+    IFS=":" read -r check_cmd import_file <<<"$imprt"
+    if ! f_exist "$check_cmd"; then
+        import_file=$(realpath "$import_file")
+        if [ -f "$import_file" ]; then
+            source "$import_file"
+        else
+            a_error "Error, no util '$import_file' found"
+            exit 1
+        fi
+    fi
+done
+# if ! f_exist "a_title"; then
+#     source
+# fi
+# # check if test exist
+# if ! f_exist "verify_commands"; then
+#     if ! >/dev/null; then
+#         a_error "No test util file"
+#         exit 1
+#     fi
+# fi
+# # check if shell configs exist
+# if ! f_exist "parse_toml_line"; then
+#     source || a_error "No shell_config util file" && exit 1
+# fi
+
 ################################################
 
 a_dialog "SDM" "··"
@@ -52,31 +82,92 @@ help_msg() {
 # Installation rutin
 run_install() {
     util_user_scripts
+    # util_generate_shell_configs
+
+}
+
+# Util generate shell config files
+util_generate_shell_configs() {
+    "$SDM_WORK_DIR/../utils/shell_config.sh"
 }
 
 # Util to link scripts
 util_user_scripts() {
-    a_action "Link user scripts"
+    a_action "Link user scripts" # Link scripts
 
-    a_action "Check '~/.local/bin' in \$PATH"
-    local search_path="~/.local/bin"
-    local found=false
+    local search_path="$HOME/.local/bin"
+    a_action "Check $search_path in \$PATH" # PATH
+
+    local found_sp=false
+    local toml_file="$SDM_WORK_DIR/../shells/config.toml"
+    # Check dir existence
+    if [ ! -d "$search_path" ]; then
+        a_warning "Directory '$search_path' not found"
+        mkdir "$search_path"
+        a_info "Created"
+    fi
+    # Seach in PATH
     IFS=":" read -r path_list <<<"$PATH"
     for single_path in "${path_list[@]}"; do
         if [ "$single_path" == "$search_path" ]; then
-            found=true
-            a_success "Path found"
+            found_sp=true
+            a_success "$search_path found"
             break
         fi
     done
-    if ! $found; then
-        a_warning "Path not found"
+    # cehck toml file
+    if [ ! -f "$toml_file" ]; then
+        a_warning "Toml config file not found"
+        a_info "Generating config file"
+        generate_toml_file
     fi
-    echo $PATH
+    # try add le seached path to the config file
+    if ! $found_sp; then
+        # modificate TOML file
+        new_path "$search_path"
+        a_info "$search_path added to shell config file"
+    fi
 
-    a_decrease ## PATH
 
-    a_decrease
+
+
+    a_decrease # PATH
+
+    # Bild sources
+    a_action "Generate shell source settings" # Generate
+    generate_shells_files
+    a_decrease # Generate
+
+    a_decrease # link scripts
+
+    #     local search_path="~/.local/bin"
+    #     local found=false
+    #     IFS=":" read -r path_list <<<"$PATH"
+    #     for single_path in "${path_list[@]}"; do
+    #         if [ "$single_path" == "$search_path" ]; then
+    #             found=true
+    #             a_success "Path found"
+    #             break
+    #         fi
+    #     done
+    #     # Check dir existence
+    #     if [ ! -d "$search_path" ]; then
+    #         a_warning "Directory '$search_path' not exit"
+    #         mkdir $search_path
+    #         a_info "Created"
+    #     fi
+    #     if ! $found; then
+    #         a_warning "Path not found in \$PATH"
+    #         # try add the path to the config.toml
+    #         local content = ""
+    #         if ! grep -qF "$CONTENT" "$config_file" 2>/dev/null; then
+
+    #         fi
+    #     fi
+    #     echo $PATH
+
+    #     a_decrease ## PATH
+
 }
 
 ################################################

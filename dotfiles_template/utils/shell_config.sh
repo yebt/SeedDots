@@ -1,14 +1,10 @@
 #!/bin/bash
 #
-WORK_DIR=$(dirname "$0")
-FILE_TOML="$WORK_DIR/../shells/config.toml"
-FILE_PROFILE="$WORK_DIR/../shells/.seeddot_profile"
-# local FILE_PROFILE="$HOME/.profile"
-FILE_FISH_CONFIG_FILE="$WORK_DIR/../shells/.seeddot_fish_config"
-# local FILE_FISH_CONFIG_FILE="$HOME/.config/fish/config.fish"
+S_C_WORK_DIR=$(dirname "$0")
+FILE_TOML="$S_C_WORK_DIR/../shells/config.toml"
 
 ###
-
+# parse a line of tomple config
 parse_toml_line() {
     local line="$1"
 
@@ -32,12 +28,14 @@ parse_toml_line() {
         echo "$name=$value"
     fi
 }
+# Get a key
 get_key() {
     local result="$1"
     key="${result%%=*}"
     key=$(echo "$key" | awk '{$1=$1};1') # Eliminar espacios en blanco al inicio y al final
     echo "$key"
 }
+# Get a value
 get_value() {
     local result="$1"
     value="${result#*=}"
@@ -45,6 +43,28 @@ get_value() {
     echo "$value"
 }
 
+################################################################
+new_path() {
+    local path_to_add="$1"
+    # FILE_TOML=${2:-FILE_TOML}
+    # Count the occurrences of path in the config.toml
+    local path_count=$(grep -o "path[0-9]*=" $FILE_TOML | wc -l)
+
+    # Increment the path count by 1 to get the new index
+    local new_path_index=$((path_count + 1))
+
+    # Check if the path already exists in the config.toml
+    if grep -q "path[0-9]*=\"$path_to_add\"" $FILE_TOML; then
+        echo "Path already exists in the config.toml file."
+        return 1
+    fi
+
+    # Escape special characters in the path
+    path_to_add=$(sed 's/[\/&]/\\&/g' <<<"$path_to_add")
+
+    # Update the config.toml file with the new path
+    sed -i "s/^\[path\]$/&\npath$new_path_index=\"$path_to_add\"/" $FILE_TOML
+}
 ################################################################
 
 # Profile
@@ -142,6 +162,12 @@ generate_fish_config() {
 }
 
 ################################################################
+generate_toml_file() {
+    echo -e \
+        '# Toml general config\n\n# Paths to add\n[path]\nSEEDDOTS_BIN = "~/.userseeddotfiles/bin"\n\n# Vars to add\n[vars]\nEDITOR = "vi"\n\n# Aliases to add\n[alias]\nls = "ls --color=auto"\nll = "ls -alF' \
+        >$FILE_TOML
+}
+################################################################
 
 ## Supported shells
 # Shell:config_file:generated_config_file
@@ -157,7 +183,7 @@ generate_shells_files() {
         a_action "$shell_name ..."
         if command -v "$shell_name" &>/dev/null; then
 
-            file_to_source="$(realpath "$WORK_DIR/../shells/.seeddot_$result_name")"
+            file_to_source="$(realpath "$S_C_WORK_DIR/../shells/.seeddot_$result_name")"
 
             # Generate the source file content
             a_action "Generating content"
@@ -188,33 +214,18 @@ generate_shells_files() {
 }
 
 # Verificar que el archivo TOML existe
-if [ ! -f $FILE_TOML ]; then
-    a_warning "TOML file not found"
-    a_action "Geneting basic TOML"
-    touch $FILE_TOML
-    echo '# Toml general config
-
-# Paths to add
-[path]
-SEEDDOTS_BIN = "~/.userseeddotfiles/bin"
-
-# Vars to add
-[vars]
-EDITOR = "vi"
-
-# Aliases to add
-[alias]
-ls = "ls --color=auto"
-ll = "ls -alF"
-' >$FILE_TOML
-    a_info "Created"
-else
-    a_success "TOML file found"
-fi
+# if [ ! -f $FILE_TOML ]; then
+#     a_warning "TOML file not found"
+#     a_action "Geneting basic TOML"
+#     touch $FILE_TOML
+#     echo '"
+# ' >$FILE_TOML
+#     a_info "Created"
+# else
+#     a_success "TOML file found"
+# fi
 
 # # Generar los archivos .profile y config.fish
 # generate_profile
 # generate_fish_config
-generate_shells_files
-
-# echo "$FILE_PROFILE:$FILE_FISH_CONFIG_FILE"
+# generate_shells_files

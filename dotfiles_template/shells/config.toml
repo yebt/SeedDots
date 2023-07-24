@@ -2,7 +2,7 @@
 
 # Paths to add
 [path]
-SEEDDOTS_BIN = "~/.userseeddotfiles/bin"
+path = "~/.userseeddotfiles/bin"
 
 # Vars to add
 [vars]
