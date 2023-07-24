@@ -18,11 +18,11 @@ f_exist() {
 
 ################################################
 
-
 # allowed commands, functions and  doc
 command_list=(
-    "help:help_msg:Show this help message",
+    "help:help_msg:Show this help message"
     "setups:run_setup:Run a setup scripts"
+    "install:run_install:Run the installation rutine"
 )
 
 ################################################
@@ -40,12 +40,70 @@ fi
 a_dialog "SDM" "··"
 
 ################################################
-
 # Function to print help message
 help_msg() {
-    echo "Available commands:"
+    a_action "Available commands:"
     for command in "${command_list[@]}"; do
-        IFS=':' read -r cmd_name cmd_function cmd_desc <<< "$command"
-        echo "  $cmd_name - $cmd_desc"
+        IFS=":" read -r cmd_name cmd_func cmd_desc <<<"$command"
+        a_info "\t${BOLD}$cmd_name${RESET} - ${ITALIC}$cmd_desc${RESET}"
     done
 }
+
+# Installation rutin
+run_install() {
+    util_user_scripts
+}
+
+# Util to link scripts
+util_user_scripts() {
+    a_action "Link user scripts"
+
+    a_action "Check '~/.local/bin' in \$PATH"
+    local search_path="~/.local/bin"
+    local found=false
+    IFS=":" read -r path_list <<<"$PATH"
+    for single_path in "${path_list[@]}"; do
+        if [ "$single_path" == "$search_path" ]; then
+            found=true
+            a_success "Path found"
+            break
+        fi
+    done
+    if ! $found; then
+        a_warning "Path not found"
+    fi
+    echo $PATH
+
+    a_decrease ## PATH
+
+    a_decrease
+}
+
+################################################
+runner() {
+    local command="$1"
+    local found=false
+
+    for cmd in "${command_list[@]}"; do
+        IFS=':' read -r cmd_name cmd_function _ <<<"$cmd"
+        if [ "$cmd_name" == "install" ]; then
+            "$cmd_function"
+            found=true
+            break
+        fi
+    done
+
+    if ! $found; then
+        a_error "Invalid '$1' command. "
+        help_msg
+        exit 1
+    fi
+}
+################################################
+
+if [ -z "$1" ]; then
+    help_msg
+    exit
+fi
+
+runner "$1"
