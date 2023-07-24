@@ -7,5 +7,4 @@ verify_commands (){
             echo "$tmp_cmd"
         fi
     done
-    echo ""
 }
