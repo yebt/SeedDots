@@ -12,7 +12,7 @@ DIR_USER_SEEDDOTFIELS="$HOME/$USER_SEEDDOTFILES_NAME"
 DIR_USER_SEEDDOTFIELS_TMP="${DIR_USER_SEEDDOTFIELS}_TMP"
 ####################################################
 # Script dir
-WORK_DIR=$(dirname "$0")
+WORK_DIR=$(realpath $(dirname "$0"))
 # The folders to inspect when migrate action is actived
 USER_DIRS_TO_RESTORE=(
     seeds   # the user modules
@@ -121,120 +121,6 @@ if [ "$flag_migrate_action" -eq "1" ]; then
     ##-->
 fi
 
-## Add to path
-##--<
-DIR_BIN="$DIR_USER_SEEDDOTFIELS/bin"
-a_action "Check $DIR_BIN in \$PATH" ## check ppath
-found_dir_bin=false
-IFS=':' read -ra dirs_in_path <<<"$PATH"
-for dir_in_path in "${dirs_in_path[@]}"; do
-    if [ "$dir_in_path" == "$DIR_BIN" ]; then
-        found_dir_bin=true
-        a_success="Path found"
-        break
-    fi
-done
-
-if ! $found_dir_bin; then
-    a_warning "Seed dotfiles bin is not in the path"
-fi
-a_decrease # check ppath
-
-exit
-# IFS=':' read -ra dirs_in_path <<< "$PATH"
-# dir_founded=false
-# for dir in "${dirs_in_path[@]}"; do
-#     if [ "$dir" = "$DIR_BIN" ]; then
-#         dir_founded=true
-#         break
-#     fi
-# done
-# a_action "Check $DIR_BIN in \$PATH"
-# if ! $dir_founded; then
-#     a_warning "SeedDot bin executables isn't in the PATH "
-#     a_action "Generate shell configs"
-
-#     getted_paths=`bash "$DIR_USER_SEEDDOTFIELS/utils/shell_config.sh"`
-#     oldIFS=$IFS
-#     IFS=":"
-#     read -r sd_profile sd_config_fish  <<< "$getted_paths"
-#     IFS=$oldIFS
-#     sd_profile=`realpath $sd_profile`
-#     sd_config_fish=`realpath $sd_config_fish`
-#     a_info "Generated:"
-#     a_info_ni "$sd_profile"
-#     a_info_ni "$sd_config_fish"
-#     a_decrease
-#     a_action "Put setting inside shell rcs"
-#     # Bash
-#     a_action "Bash..."
-#     if command -v bash &>/dev/null; then
-#         CONTENT="source $sd_profile"
-#         FILE="$HOME/.bashrc"
-#         if [ ! -f "$FILE" ]; then
-#             a_warning "File '$FILE' not exit"
-#             touch $FILE
-#             a_info "Created"
-#         fi
-#         if ! grep -qF "$CONTENT" "$FILE" 2> /dev/null; then
-#             echo $CONTENT >> "$FILE"
-#             a_success "OK"
-#         else
-#             a_success "skipped"
-#         fi
-#     else
-#         a_info "No bash"
-#     fi
-#     a_decrease
-
-#     # zsh
-#     a_action "ZSH..."
-#     if command -v zsh &>/dev/null; then
-#         CONTENT="source $sd_profile"
-#         FILE="$HOME/.zshrc"
-#         if [ ! -f "$FILE" ]; then
-#             a_warning "File '$FILE' not exit"
-#             touch $FILE
-#             a_info "Created"
-#         fi
-#         if ! grep -qF "$CONTENT" "$FILE" 2> /dev/null; then
-#             echo $CONTENT >> "$FILE"
-#             a_success "OK"
-#         else
-#             a_success "skipped"
-#         fi
-#     else
-#         a_info "No zsh"
-#     fi
-#     a_decrease
-
-#     # fish
-#     a_action "FISH SH..."
-#     if command -v zsh &>/dev/null; then
-#         CONTENT="source $sd_config_fish"
-#         FILE="$HOME/.config/fish/config.fish"
-#         if [ ! -f "$FILE" ]; then
-#             a_warning "File '$FILE' not exit"
-#             mkdir -p $(dirname "$FILE")
-#             touch $FILE
-#             a_info "Created"
-#         fi
-#         if ! grep -qF "$CONTENT" "$FILE" 2> /dev/null; then
-#             echo $CONTENT >> "$FILE"
-#             a_success "OK"
-#         else
-#             a_success "skipped"
-#         fi
-#     else
-#         a_info "No zsh"
-#     fi
-#     a_decrease
-
-#     #
-#     a_decrease
-# fi
-
-# a_decrease ## migrate
 
 a_action "Symbolic links the utils scripts"
 ultils_folder="$DIR_USER_SEEDDOTFIELS/utils"
@@ -268,7 +154,7 @@ a_decrease
 
 ##-->
 
-a_action "Make executables"
+a_action "Make executables" # executabless
 executables=(
     "$DIR_USER_SEEDDOTFIELS/bin/sdm"
 )
@@ -280,9 +166,13 @@ for script_te in ${executables[@]}; do
         a_warning "File not found: $script_te"
     fi
 done
+a_decrease # executables
+
+a_reset
+a_action "Trigger 'sdm' install"
+echo
+
+bash "$DIR_USER_SEEDDOTFIELS/bin/sdm" install
 a_decrease
 
-echo
-a_reset
 a_dialog "Insallation finished" " "
-
