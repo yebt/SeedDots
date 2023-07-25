@@ -212,7 +212,7 @@ a_confirm (){
     while [ "$response" == ""  ];
     do
         a_question "$message"
-        read -p "(y/n): " response
+        read -p "(y/n): " -n 1 response
         response=`trim $response`
         if [ "$response" == "" ]; then
             response=$default_sel
