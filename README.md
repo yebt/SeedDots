@@ -1,5 +1,7 @@
 # SeedDots
 
+> _A dot, a seed, an idea, little things that could create a new world_
+
 <!--LOGO-->
 ![Logo](./assets/logo.png)
 
@@ -18,8 +20,8 @@ It is the module that contains the information about a group of dotfails that wo
 ## Installation
 
 ```sh
-git clone https://github.com/yebt/SeedDots
-cd SeedDots
+git clone https://github.com/yebt/SeedDots ~/.seeddots
+cd ~/.seeddots
 bash ./bin/install.sh
 ```
 
