@@ -16,10 +16,10 @@ RESET='\033[0m' # Restaurar el color original
 BOLD='\033[1m'
 ITALIC='\033[3m'
 ##################################################
-## Herarchy 
+## Herarchy
 GLOBAL_HIERARCHY=0
 HIERARCHY_ICON="  "
-LAST_PREFIX="" # last calculated indent 
+LAST_PREFIX="" # last calculated indent
 LAST_HIERARCHY=0
 ##################################################
 trim() {
@@ -29,7 +29,7 @@ trim() {
 }
 ##################################################
 # General printer
-print_message(){
+print_message() {
     # vars
     local message=$1
     local herarchy_motion=$2
@@ -56,90 +56,90 @@ print_message(){
 }
 ##################################################
 # Specific alerts
-a_dialog(){
+a_dialog() {
     local message=$1
     local wrap_icon=${2:-"#"}
     local len_msg=${#message}
-    (( len_msg+=2 ))
+    ((len_msg += 2))
     local len_wi=${#wrap_icon}
     local wrap_repetition=0
-    (( wrap_repetition=(len_msg+len_wi-1)/len_wi ))
-    
+    ((wrap_repetition = (len_msg + len_wi - 1) / len_wi))
+
     local trwap=""
-    for ((i = 0; i < wrap_repetition+2; i++)); do
+    for ((i = 0; i < wrap_repetition + 2; i++)); do
         trwap+=$wrap_icon
     done
-    ((reserved_msg_len=( ${#trwap} - (${#wrap_icon}*2 +2) )))
-    message=`printf "%-${reserved_msg_len}s" "$message"`
+    ((reserved_msg_len = (${#trwap} - (${#wrap_icon} * 2 + 2))))
+    message=$(printf "%-${reserved_msg_len}s" "$message")
     message=" $trwap
  $wrap_icon $message $wrap_icon
  $trwap
  "
     a_title "$message" $PURPLE
 }
-a_title(){
+a_title() {
     local msg_color=${2:-$GREEN}
     local local_indent=0
     local left="${msg_color}${BOLD}"
     local icon=""
     local right="${RESET}"
     local message="${left}${icon}${1^^}${right}"
-    print_message  "$message\n" 0 "$local_indent"
+    print_message "$message\n" 0 "$local_indent"
 }
-a_error (){
+a_error() {
     local indent_motion=${2:-0}
     local local_indent=1
     local left="${RED}"
     local icon="[x]"
     local right="${RESET}"
     local message="${left}${icon} ${ITALIC}$1 ${right}"
-    print_message  "$message\n" "$indent_motion" "$local_indent"
+    print_message "$message\n" "$indent_motion" "$local_indent"
 }
-a_error_ni(){
+a_error_ni() {
     local indent_motion=${2:-0}
     local local_indent=1
     local left="${RED}"
     local icon="  "
     local right="${RESET}"
     local message="${left}${icon} ${ITALIC}$1 ${right}"
-    print_message  "$message\n" "$indent_motion" "$local_indent"
+    print_message "$message\n" "$indent_motion" "$local_indent"
 }
 ###
-a_warning (){
+a_warning() {
     local indent_motion=${2:-0}
     local local_indent=1
     local left="${YELLOW}"
     local icon="[!]"
     local right="${RESET}"
     local message="${left}${icon} ${ITALIC}$1 ${right}"
-    print_message  "$message\n" "$indent_motion" "$local_indent"
+    print_message "$message\n" "$indent_motion" "$local_indent"
 }
-a_warning_ni (){
+a_warning_ni() {
     local indent_motion=${2:-0}
     local local_indent=1
     local left="${YELLOW}"
     local icon="   "
     local right="${RESET}"
     local message="${left}${icon} ${ITALIC}$1 ${right}"
-    print_message  "$message\n" "$indent_motion" "$local_indent"
+    print_message "$message\n" "$indent_motion" "$local_indent"
 }
-a_info (){
+a_info() {
     local indent_motion=${2:-0}
     local local_indent=1
     local left="${BLUE}"
     local icon="[i]"
     local right="${RESET}"
     local message="${left}${icon} ${ITALIC}$1 ${right}"
-    print_message  "$message\n" "$indent_motion" "$local_indent"
+    print_message "$message\n" "$indent_motion" "$local_indent"
 }
-a_info_ni (){
+a_info_ni() {
     local indent_motion=${2:-0}
     local local_indent=1
     local left="${BLUE}"
     local icon="   "
     local right="${RESET}"
     local message="${left}${icon} ${ITALIC}$1 ${right}"
-    print_message  "$message\n" "$indent_motion" "$local_indent"
+    print_message "$message\n" "$indent_motion" "$local_indent"
 }
 ##
 a_question() {
@@ -149,85 +149,85 @@ a_question() {
     local icon="[?]"
     local right="${RESET}"
     local message="${left}${icon} ${ITALIC}$1 ${right}"
-    print_message  "$message" "$indent_motion" "$local_indent"
+    print_message "$message" "$indent_motion" "$local_indent"
 }
 ##
-a_success(){
+a_success() {
     local indent_motion=${2:-0}
     local local_indent=1
     local left="${GREEN}"
     local icon="[✓]"
     local right="${RESET}"
     local message="${left}${icon} ${ITALIC}$1 ${right}"
-    print_message  "$message\n" "$indent_motion" "$local_indent"
+    print_message "$message\n" "$indent_motion" "$local_indent"
 }
-a_success_ni(){
+a_success_ni() {
     local indent_motion=${2:-0}
     local local_indent=1
     local left="${GREEN}"
     local icon="   "
     local right="${RESET}"
     local message="${left}${icon} ${ITALIC}$1 ${right}"
-    print_message  "$message\n" "$indent_motion" "$local_indent"
+    print_message "$message\n" "$indent_motion" "$local_indent"
 }
-a_action (){
+a_action() {
     local indent_motion=${2:-"1"}
     local local_indent=0
     local left="${BOLD}"
     local icon=">>"
     local right="${RESET}"
     local message="${left}${icon} $1 ${right}"
-    print_message  "$message\n" "$indent_motion" "$local_indent"
+    print_message "$message\n" "$indent_motion" "$local_indent"
 }
-a_print(){
+a_print() {
     local indent_motion=${2:-0}
     local local_indent=1
     local left=""
     local icon=""
     local right="${RESET}"
     local message="${left}${icon} $1 ${right}"
-    print_message  "$message\n" "$indent_motion" "$local_indent"
+    print_message "$message\n" "$indent_motion" "$local_indent"
 }
 ##
-a_increase(){
- (( GLOBAL_HIERARCHY +=1 ))
+a_increase() {
+    ((GLOBAL_HIERARCHY += 1))
 }
-a_decrease(){
+a_decrease() {
     if [ $GLOBAL_HIERARCHY -gt 0 ]; then
-        (( GLOBAL_HIERARCHY -=1 ))
+        ((GLOBAL_HIERARCHY -= 1))
     fi
 }
-a_reset(){
+a_reset() {
     GLOBAL_HIERARCHY=0
 }
 ##
 ##################################################
-a_confirm (){
+a_confirm() {
     local message="$1"
     local default_sel="$2"
     local response=""
-    if [ "$default_sel" != ""  ] ;then
+    if [ "$default_sel" != "" ]; then
         message+=" [$default_sel]"
     fi
-    while [ "$response" == ""  ];
-    do
+    while [ "$response" == "" ]; do
         a_question "$message"
         read -p "(y/n): " -n 1 response
-        response=`trim $response`
+        echo
+        response=$(trim $response)
         if [ "$response" == "" ]; then
             response=$default_sel
         fi
         case "$response" in
-            [Yy]*)
-                return 0
-                ;;
-            [Nn]*)
-                return 1
-                ;;
-            *)
-                a_error "Invalid option. Please select Y or N"
-                response=""
-                ;;
+        [Yy]*)
+            return 0
+            ;;
+        [Nn]*)
+            return 1
+            ;;
+        *)
+            a_error "Invalid option. Please select Y or N"
+            response=""
+            ;;
         esac
     done
 }
@@ -236,7 +236,7 @@ a_confirm (){
 #a_decrease
 #a_error "error 1" 1
 #a_warning "war"
-#a_info "inf " 
+#a_info "inf "
 #a_decrease
 #a_success "OK"
 #a_reset
@@ -244,4 +244,3 @@ a_confirm (){
 #a_action "filterall"
 #a_confirm "why?"
 #a_action "uwu"
-

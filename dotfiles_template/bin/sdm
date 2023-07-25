@@ -6,7 +6,7 @@
 
 ################################################
 # Vars
-SDM_WORK_DIR=$(dirname $0)
+SDM_WORK_DIR=$(realpath $(dirname $0))
 
 ################################################
 # Functions
@@ -21,8 +21,8 @@ f_exist() {
 # allowed commands, functions and  doc
 command_list=(
     "help:help_msg:Show this help message"
-    "setups:run_setup:Run a setup scripts"
     "install:run_install:Run the installation rutine"
+    "setups:util_setup_scripts:Run setup scripts"
 )
 
 ################################################
@@ -50,20 +50,6 @@ for imprt in ${imports[@]}; do
         fi
     fi
 done
-# if ! f_exist "a_title"; then
-#     source
-# fi
-# # check if test exist
-# if ! f_exist "verify_commands"; then
-#     if ! >/dev/null; then
-#         a_error "No test util file"
-#         exit 1
-#     fi
-# fi
-# # check if shell configs exist
-# if ! f_exist "parse_toml_line"; then
-#     source || a_error "No shell_config util file" && exit 1
-# fi
 
 ################################################
 
@@ -82,19 +68,17 @@ help_msg() {
 # Installation rutin
 run_install() {
     util_user_scripts
-    # util_generate_shell_configs
+    util_setup_scripts
+    # put seeds
+    uitl_restore_seeds
 
-}
-
-# Util generate shell config files
-util_generate_shell_configs() {
-    "$SDM_WORK_DIR/../utils/shell_config.sh"
 }
 
 # Util to link scripts
 util_user_scripts() {
     a_action "Link user scripts" # Link scripts
 
+    #
     local search_path="$HOME/.local/bin"
     a_action "Check $search_path in \$PATH" # PATH
 
@@ -128,46 +112,175 @@ util_user_scripts() {
         a_info "$search_path added to shell config file"
     fi
 
-
-
-
     a_decrease # PATH
 
     # Bild sources
     a_action "Generate shell source settings" # Generate
     generate_shells_files
     a_decrease # Generate
+    ################################################################
+    local user_script_folder="$SDM_WORK_DIR/../scripts"
+    user_script_folder="$(realpath $user_script_folder)"
+
+    if [ ! -d "$user_script_folder" ]; then
+        a_warning "No found scripts folder"
+        return 1
+    fi
+
+    a_action "Check broken symbolic links" # "Check broken symbolic links
+    find "$search_path" -type l | while read util_symlink; do
+        # check symbolic link
+        if [ ! -e "$util_symlink" ]; then
+            rm $util_symlink
+            a_warning "Remove $util_symlink"
+        fi
+    done
+    a_decrease # "Check broken symbolic links
+
+    a_action "Check utils scripts" # check scripts
+    if [ -n "$(find "$user_script_folder" -maxdepth 1 -type f)" ]; then
+        for user_script in "$user_script_folder"/*; do
+            if [ -f "$user_script" ]; then
+
+                local realfile=$(realpath $user_script)
+                chmod +x "$realfile"
+                ln -sf "$realfile" "$search_path"
+                a_success "link $(basename "$user_script")"
+            fi
+        done
+    fi
+    a_decrease # check scripts
 
     a_decrease # link scripts
 
-    #     local search_path="~/.local/bin"
-    #     local found=false
-    #     IFS=":" read -r path_list <<<"$PATH"
-    #     for single_path in "${path_list[@]}"; do
-    #         if [ "$single_path" == "$search_path" ]; then
-    #             found=true
-    #             a_success "Path found"
-    #             break
-    #         fi
-    #     done
-    #     # Check dir existence
-    #     if [ ! -d "$search_path" ]; then
-    #         a_warning "Directory '$search_path' not exit"
-    #         mkdir $search_path
-    #         a_info "Created"
-    #     fi
-    #     if ! $found; then
-    #         a_warning "Path not found in \$PATH"
-    #         # try add the path to the config.toml
-    #         local content = ""
-    #         if ! grep -qF "$CONTENT" "$config_file" 2>/dev/null; then
+}
 
-    #         fi
-    #     fi
-    #     echo $PATH
+# Util to run setup scripts
+util_setup_scripts() {
+    a_action "Runn Setup Scripts"
 
-    #     a_decrease ## PATH
+    # get distro
+    get_distribution() {
+        if [ -x "$(command -v lsb_release)" ]; then
+            lsb_release -is
+        elif [ -f "/etc/os-release" ]; then
+            source /etc/os-release
+            echo "$ID"
+        elif [ -f "/etc/lsb-release" ]; then
+            source /etc/lsb-release
+            echo "$DISTRIB_ID"
+        else
+            echo "Distribución desconocida"
+            exit 1
+        fi
+    }
 
+    a_action "Get distro"
+    local current_distro=$(get_distribution)
+    a_info "Detected distro: $current_distro"
+    a_decrease # Get distro
+
+    a_action "List aviable distro scripts"
+    local distro_dir="$(realpath "$SDM_WORK_DIR/../setup_scripts/")"
+    if [ ! -d "$distro_dir" ]; then
+        a_warning "No setup scripts folder found"
+        mkdir -p $distro_dir
+        a_info "Created '$distro_dir'"
+    fi
+    distro_dir="$(realpath "$distro_dir/$current_distro")"
+    if [ ! -d "$distro_dir" ]; then
+        a_warning "No setup script folder for $current_distro found"
+        mkdir -p "$distro_dir"
+        touch "$distro_dir/.gitkeep"
+        a_info "Created"
+    fi
+
+    local execute_list=()
+    cd "$distro_dir"
+    local distro_setups_list="$(find ./ -type f -not -path "*/.*")"
+    if [ -z "$distro_setups_list" ] || [ "$distro_setups_list" == "" ]; then
+        a_info "No distro setups found"
+    else
+        a_info "Allow setup scripts:"
+        echo "$distro_setups_list"
+
+        if a_confirm "Execute all distro setup scripts?"; then
+            execute_list=($distro_setups_list)
+        elif a_confirm "Select distro setup scripts to execute?"; then
+            IFS=$'\n'
+            for distro_setup_file in $distro_setups_list; do
+                if a_confirm "Execute this scipt:${RESET} '$distro_setup_file'"; then
+                    execute_list+=("$distro_setup_file")
+                fi
+            done
+        else
+            a_info "Distro scripts skipped"
+        fi
+        # execute selected files
+        if [ ${#execute_list[@]} -eq 0 ]; then
+            a_info "No distro setup scripts to be executed"
+        else
+            a_action "Executing: ..."
+            for distro_sf in "${execute_list[@]}"; do
+                a_info "Running: $distro_sf"
+                bash "$distro_sf"
+            done
+            a_decrease # Executing
+        fi
+    fi
+
+    a_decrease # list available distro scripts
+
+    a_action "List general setup scripts"
+    local general_scripts="$(realpath "$SDM_WORK_DIR/../setup_scripts/all")"
+    if [ ! -d "$general_scripts" ]; then
+        a_warning "No general setup script folder found"
+        mkdir -p "$general_scripts"
+        touch "$general_scripts/.gitkeep"
+        a_info "Created"
+    fi
+    execute_list=()
+    cd "$general_scripts"
+    local general_setups_list="$(find ./ -type f -not -path "*/.*")"
+    if [ -z "$general_setups_list" ] || [ "$general_setups_list" == "" ]; then
+        a_info "No general setups found"
+    else
+        a_info "Allow setup scripts:"
+        echo "$general_setups_list"
+
+        if a_confirm "Execute all general setup scripts?"; then
+            execute_list=($general_setups_list)
+        elif a_confirm "Select  general setup scripts to execute?"; then
+            IFS=$'\n'
+            for general_setup_file in $general_setups_list; do
+                if a_confirm "Execute this scipt:${RESET} '$general_setup_file'"; then
+                    execute_list+=("$general_setup_file")
+                fi
+            done
+        else
+            a_info "General setup scripts skipped"
+        fi
+        # execute selected files
+        if [ ${#execute_list[@]} -eq 0 ]; then
+            a_info "No general setup scripts to be executed"
+        else
+            a_action "Executing: ..."
+            for distro_sf in "${execute_list[@]}"; do
+                a_info "Running: $distro_sf"
+                bash "$distro_sf"
+            done
+            a_decrease # Executing
+        fi
+    fi
+
+    a_decrease # List general setup scripts
+
+    a_decrease # setup scripts
+}
+
+# Util to restore the seeds
+uitl_restore_seeds(){
+    
 }
 
 ################################################

@@ -54,6 +54,7 @@ new_path() {
     local new_path_index=$((path_count + 1))
 
     # Check if the path already exists in the config.toml
+
     if grep -q "path[0-9]*=\"$path_to_add\"" $FILE_TOML; then
         echo "Path already exists in the config.toml file."
         return 1
@@ -178,11 +179,12 @@ supported_shells=(
 )
 # sourc files
 generate_shells_files() {
-    for shell_sup in ${shell_sup[@]}; do
+    
+    for shell_sup in "${supported_shells[@]}"; do
         IFS=":" read -r shell_name config_file result_name function_name <<<$shell_sup
+        config_file="${config_file/#\~/$HOME}"
         a_action "$shell_name ..."
         if command -v "$shell_name" &>/dev/null; then
-
             file_to_source="$(realpath "$S_C_WORK_DIR/../shells/.seeddot_$result_name")"
 
             # Generate the source file content
@@ -203,7 +205,7 @@ generate_shells_files() {
                 echo $CONTENT >>"$config_file"
                 a_success "Source content updated"
             else
-                a_success "Source content skipped"
+                a_info "Source content skipped"
             fi
 
         else

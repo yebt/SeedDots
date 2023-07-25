@@ -10,5 +10,4 @@ EDITOR = "vi"
 
 # Aliases to add
 [alias]
-ls = "ls --color=auto"
-ll = "ls -alF"
+seedd="echo A dot, a seed, an idea, little things that could create a new world "
