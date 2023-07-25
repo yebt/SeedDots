@@ -15,10 +15,11 @@ DIR_USER_SEEDDOTFIELS_TMP="${DIR_USER_SEEDDOTFIELS}_TMP"
 WORK_DIR=$(realpath $(dirname "$0"))
 # The folders to inspect when migrate action is actived
 USER_DIRS_TO_RESTORE=(
-    seeds   # the user modules
-    scripts # the user scripts
-    docs    # docs
-    shells  # shells configs
+    docs            # docs
+    scripts         # the user scripts
+    seeds           # the user modules
+    setup_scripts   # setup scripts gruped by os  
+    shells          # shells configs
 )
 USER_FILES_TO_RESTORE=(
 )
@@ -139,7 +140,7 @@ if [ -d "$work_dir_util_script" ]; then
                 # filename=$(basename "$util_script")
                 realfile=$(realpath $util_script)
                 # a_info "Symbolic link '$realfile' to '$ultils_folder/$filename"
-                ln -s "$realfile" "$ultils_folder/$filename"
+                ln -s "$realfile" "$ultils_folder/"
                 a_success "link $(basename "$util_script")"
             fi
         done
@@ -158,6 +159,7 @@ a_action "Make executables" # executabless
 executables=(
     "$DIR_USER_SEEDDOTFIELS/bin/sdm"
 )
+
 for script_te in ${executables[@]}; do
     if [ -f "$script_te" ]; then
         chmod +x "$script_te"
