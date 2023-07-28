@@ -53,6 +53,8 @@ done
 
 ################################################
 
+cat "$SDM_WORK_DIR/../utils/logo.txt"
+
 a_dialog "SDM" "··"
 
 ################################################
@@ -280,7 +282,11 @@ util_setup_scripts() {
 
 # Util to restore the seeds
 uitl_restore_seeds(){
-    
+    a_action "Running Seeds"
+
+
+
+    a_decrease # Running Seeds
 }
 
 ################################################
